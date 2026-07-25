@@ -296,8 +296,8 @@ function renderTaskCard(task, opts = {}) {
         </button>` : ''}
 
       ${task.subtasks?.length ? `
-        <div class="subtask-list subtask-list--visible" id="subtasks-${task.id}">
-             
+        <div class="subtask-list ${expandedSubtasks ? 'subtask-list--visible' : ''}"
+             id="subtasks-${task.id}">
           ${subtasksHtml}
           <button class="subtask-item__add" data-action="add-subtask" data-parent="${task.id}">
             ${t('tasks.subtaskAdd')}
