@@ -295,9 +295,9 @@ function renderTaskCard(task, opts = {}) {
           <span class="subtask-progress__text">${task.subtask_done}/${task.subtask_total}</span>
         </button>` : ''}
 
-      ${task.subtasks !== undefined ? `
-        <div class="subtask-list ${expandedSubtasks ? 'subtask-list--visible' : ''}"
-             id="subtasks-${task.id}">
+      ${task.subtasks?.length ? `
+        <div class="subtask-list subtask-list--visible" id="subtasks-${task.id}">
+             
           ${subtasksHtml}
           <button class="subtask-item__add" data-action="add-subtask" data-parent="${task.id}">
             ${t('tasks.subtaskAdd')}

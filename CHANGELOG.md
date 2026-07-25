@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Added subtask visualization on the tasks page, displaying related subtasks directly inside the main task cards. Tasks with subtasks now show their associated items within the task list, improving organization and making task relationships easier to view.
+
 ## [1.45.5] - 2026-07-24
 
 ### Fixed
