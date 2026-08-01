@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Added support for credit card accounts with invoice management.
+- Added installment purchase tracking.
+- Added invoice payment and status tracking.
+
 ## [1.68.0] - 2026-07-31
 
 ### Added
