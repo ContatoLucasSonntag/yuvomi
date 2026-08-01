@@ -4221,6 +4221,100 @@ const MIGRATIONS = [
         ON caldav_todo_pending_deletions(account_id);
     `,
   },
+  {
+    version: 114,
+    description: 'Budget credit-card account metadata for bank, limit, and payment calendar',
+    up: `
+      ALTER TABLE budget_accounts ADD COLUMN credit_bank TEXT;
+      ALTER TABLE budget_accounts ADD COLUMN credit_limit REAL;
+      ALTER TABLE budget_accounts ADD COLUMN closing_day INTEGER;
+      ALTER TABLE budget_accounts ADD COLUMN due_day INTEGER;
+    `,
+  },
+  {
+    version: 115,
+    description: 'Budget card invoices: installment tracking and billing metadata on entries',
+    up: `
+      ALTER TABLE budget_entries ADD COLUMN invoice_status TEXT;
+      ALTER TABLE budget_entries ADD COLUMN invoice_installments INTEGER;
+      ALTER TABLE budget_entries ADD COLUMN invoice_paid_installments INTEGER NOT NULL DEFAULT 0;
+      ALTER TABLE budget_entries ADD COLUMN invoice_due_day INTEGER;
+      ALTER TABLE budget_entries ADD COLUMN invoice_closing_day INTEGER;
+    `,
+  },
+  {
+    version: 116,
+    description: 'Budget credit-card statements: one close and payment per account and month',
+    up: `
+      CREATE TABLE budget_account_invoices (
+        id              INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_id      INTEGER NOT NULL REFERENCES budget_accounts(id) ON DELETE CASCADE,
+        statement_month TEXT NOT NULL,
+        status          TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open', 'closed', 'paid')),
+        amount          REAL NOT NULL DEFAULT 0,
+        closed_at       TEXT,
+        paid_at         TEXT,
+        created_by      INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        UNIQUE(account_id, statement_month)
+      );
+      CREATE INDEX idx_budget_account_invoices_month
+        ON budget_account_invoices(statement_month, account_id);
+    `,
+  },
+  {
+    version: 117,
+    description: 'Link credit-card installment entries into editable purchase series',
+    up: `
+      ALTER TABLE budget_entries ADD COLUMN invoice_series_id TEXT;
+      CREATE INDEX idx_budget_entries_invoice_series ON budget_entries(invoice_series_id, date);
+    `,
+  },
+  {
+    version: 118,
+    description: 'Track partial payments for credit-card invoices',
+    up: `ALTER TABLE budget_account_invoices ADD COLUMN paid_amount REAL NOT NULL DEFAULT 0;`,
+  },
+  {
+    version: 119,
+    description: 'Record and reverse individual credit-card invoice payments',
+    up: `
+      CREATE TABLE budget_account_invoice_payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_id INTEGER NOT NULL REFERENCES budget_accounts(id) ON DELETE CASCADE,
+        statement_month TEXT NOT NULL,
+        amount REAL NOT NULL,
+        debit_entry_id INTEGER REFERENCES budget_entries(id) ON DELETE SET NULL,
+        credit_entry_id INTEGER REFERENCES budget_entries(id) ON DELETE SET NULL,
+        reversed_at TEXT,
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+      );
+      CREATE INDEX idx_budget_invoice_payments_statement ON budget_account_invoice_payments(account_id, statement_month);
+    `,
+  },
+  {
+    version: 120,
+    description: 'Allow partial credit-card invoice status',
+    up: `
+      CREATE TABLE budget_account_invoices_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        account_id INTEGER NOT NULL REFERENCES budget_accounts(id) ON DELETE CASCADE,
+        statement_month TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open', 'closed', 'partial', 'paid')),
+        amount REAL NOT NULL DEFAULT 0,
+        closed_at TEXT,
+        paid_at TEXT,
+        created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        paid_amount REAL NOT NULL DEFAULT 0,
+        UNIQUE(account_id, statement_month)
+      );
+      INSERT INTO budget_account_invoices_new (id, account_id, statement_month, status, amount, closed_at, paid_at, created_by, paid_amount)
+        SELECT id, account_id, statement_month, status, amount, closed_at, paid_at, created_by, paid_amount FROM budget_account_invoices;
+      DROP TABLE budget_account_invoices;
+      ALTER TABLE budget_account_invoices_new RENAME TO budget_account_invoices;
+      CREATE INDEX idx_budget_account_invoices_month ON budget_account_invoices(statement_month, account_id);
+    `,
+  },
 ];
 
 /**
