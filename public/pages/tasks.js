@@ -363,6 +363,7 @@ function renderTaskGroups(tasks, groupMode) {
       ${sorted.map((t) => renderSwipeRow(t, renderTaskCard(t, {
         showCheckbox: state.bulkSelectMode,
         isChecked: state.selectedTaskIds.has(t.id),
+        expandedSubtasks: state.subtasksExpandedByDefault,
       }))).join('')}
     </div>`;
   }).join('');
@@ -553,6 +554,7 @@ let state = {
   groupMode:       'category',   // 'category' | 'due'
   viewMode:        'list',       // 'list' | 'kanban' (resolved at render time)
   showFuture:      false,
+  subtasksExpandedByDefault: false,
   expandedTasks:   new Set(),
   dragTaskId:      null,
   filterPanelOpen: false,
@@ -2281,14 +2283,16 @@ export async function render(container, { user }) {
     if (state.showFuture)          params.set('include_future', '1');
     const query = params.toString() ? `?${params}` : '';
 
-    const [tasksData, metaData] = await Promise.all([
+    const [tasksData, metaData, preferencesData] = await Promise.all([
       api.get(`/tasks${query}`),
       api.get('/tasks/meta/options'),
+      api.get('/preferences'),
     ]);
     state.tasks = tasksData.data ?? [];
     state.users = metaData.users ?? [];
     state.categories = metaData.categories ?? [];
     state.defaultPoints = Number(metaData.default_points) || 0;
+    state.subtasksExpandedByDefault = preferencesData.data?.tasks_subtasks_expanded === true;
   } catch (err) {
     console.error('[Tasks] Ladefehler:', err.message);
     window.yuvomi.showToast(t('tasks.loadError'), 'danger');
@@ -2296,6 +2300,7 @@ export async function render(container, { user }) {
     state.users = [];
     state.categories = [];
     state.defaultPoints = 0;
+    state.subtasksExpandedByDefault = false;
   }
 
   // UI verdrahten
