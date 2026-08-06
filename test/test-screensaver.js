@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { __test } from '../server/routes/screensaver.js';
+
+// server/db.js initializes on import; select an isolated database before the
+// dynamic route import so this suite can never touch a developer installation.
+process.env.DB_PATH = ':memory:';
+const { __test } = await import('../server/routes/screensaver.js');
 
 test('Immich URL accepts server roots and URLs ending in /api', () => {
   assert.equal(__test.immichUrl('https://photos.example', '/search/random'), 'https://photos.example/api/search/random');
