@@ -18,6 +18,7 @@
     "test:rename-migration": "node --experimental-sqlite test/test-rename-migration.js",
     "test:db-encryption": "node --experimental-sqlite --test test/test-db-encryption.js",
     "test:dashboard": "node --experimental-sqlite test/test-dashboard.js",
+    "test:screensaver": "node --test test/test-screensaver.js",
     "test:multi-assignment": "node --experimental-sqlite test/test-multi-assignment.js",
     "test:visibility": "node --experimental-sqlite test/test-visibility.js",
     "test:sync-default-assignee": "node --experimental-sqlite test/test-sync-default-assignee.js",
